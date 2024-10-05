@@ -52,7 +52,7 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, ObjectId]):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize the database
-    await init_beanie(database=db, document_models=[User])
+    await init_beanie(database=db, document_models=[User, Sound])
     yield  # Hand control over to the application
     # Optionally, add shutdown logic here if necessary
 
@@ -69,14 +69,13 @@ app.add_middleware(
 )
 
 
-# Initialize the database
-async def init_db():
-    await init_beanie(database=db, document_models=[User])
-
-# JWT Authentication setup
-auth_backends = [
-    JWTStrategy(secret=SECRET, lifetime_seconds=3600),
-]
+# Authentication backend setup
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
+auth_backend = AuthenticationBackend(
+    name="jwt",
+    transport=bearer_transport,
+    get_strategy=lambda: JWTStrategy(secret=SECRET, lifetime_seconds=3600),
+)
 
 # Use the following link to fix this
 # https://fastapi-users.github.io/fastapi-users/10.1/configuration/full-example/
@@ -84,7 +83,7 @@ auth_backends = [
 user_db = BeanieUserDatabase(User)
 fastapi_users = FastAPIUsers(
     user_db,
-    auth_backends,
+    auth_backend,
 )
 
 # User router
