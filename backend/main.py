@@ -21,8 +21,24 @@ client = AsyncIOMotorClient(DATABASE_URL)
 db = client["soundboard"]
 
 # User model
-class User(BeanieBaseUser, Document):
-    pass
+class User(Document, BaseUserManager):
+    email: Indexed(EmailStr, unique=True)
+    hashed_password: str
+    is_active: bool = True
+    is_superuser: bool = False
+    is_verified: bool = False
+
+    class Settings:
+        name = "users"
+
+# Sound model
+class Sound(Document):
+    user_id: ObjectId
+    sound_url: str
+    sound_name: str
+
+    class Settings:
+        name = "sounds"
 
 class UserCreate(BaseModel):
     email: str
