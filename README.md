@@ -1,1 +1,3 @@
 # SoundBoard
+
+Connect to jira
