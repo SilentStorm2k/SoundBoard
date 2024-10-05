@@ -77,18 +77,21 @@ auth_backend = AuthenticationBackend(
     get_strategy=lambda: JWTStrategy(secret=SECRET, lifetime_seconds=3600),
 )
 
+async def get_user_db():
+    yield BeanieUserDatabase(User)
+
+# FastAPI Users setup
+async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)):
+    yield UserManager(user_db)
+
 # Use the following link to fix this
 # https://fastapi-users.github.io/fastapi-users/10.1/configuration/full-example/
 # FastAPI Users setup
-user_db = BeanieUserDatabase(User)
-fastapi_users = FastAPIUsers(
-    user_db,
-    auth_backend,
-)
+fastapi_users = FastAPIUsers[User, ObjectId](get_user_manager, [auth_backend])
 
 # User router
 app.include_router(
-    fastapi_users.get_auth_router(auth_backends[0]),
+    fastapi_users.get_auth_router(auth_backend),
     prefix="/auth/jwt",
     tags=["auth"]
 )
@@ -116,24 +119,24 @@ async def upload_sound(
     s3_client.upload_fileobj(file.file, S3_BUCKET_NAME, file_path)
 
     # Save file metadata to MongoDB
-    sound_data = {
-        "user_id": user.id,
-        "sound_url": f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{file_path}",
-        "sound_name": file.filename
-    }
-    result = await db["sounds"].insert_one(sound_data)
+    sound= Sound(
+        user_id     = user.id,
+        sound_url   = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{file_path}",
+        sound_name  = file.filename
+    )
+    await sound.insert()
 
-    return {"message": "File uploaded successfully", "sound_id": str(result.inserted_id)}
+    return {"message": "File uploaded successfully", "sound_id": str(sound.id)}
 
 # Get user's sounds endpoint
 @app.get("/sounds/")
 async def get_sounds(user: User = Depends(fastapi_users.current_user(active=True))):
-    sounds = await db["sounds"].find({"user_id": user.id}).to_list(None)
+    sounds = await Sound.find(Sound.user_id == user.id).to_list()
     return [
         {
-            "id": str(sound["_id"]),
-            "sound_name": sound["sound_name"],
-            "sound_url": sound["sound_url"]
+            "id": str(sound.id),
+            "sound_name": sound.sound_name,
+            "sound_url": sound.sound_url
         }
         for sound in sounds
     ]
