@@ -16,6 +16,22 @@ DATABASE_URL = "mongodb://localhost:27017"
 SECRET = "YOUR_SECRET_KEY"  # Replace with a secure secret key
 S3_BUCKET_NAME = "your-s3-bucket-name"  # Replace with your S3 bucket name
 
+# MongoDB setup
+client = AsyncIOMotorClient(DATABASE_URL)
+db = client["soundboard"]
+
+# User model
+class User(BeanieBaseUser, Document):
+    pass
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+class UserUpdate(BaseModel):
+    email: str | None = None
+    password: str | None = None
+
 # FastAPI app setup with lifespan context
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,21 +52,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB setup
-client = AsyncIOMotorClient(DATABASE_URL)
-db = client["soundboard"]
-
-# User model
-class User(BeanieBaseUser, Document):
-    pass
-
-class UserCreate(BaseModel):
-    email: str
-    password: str
-
-class UserUpdate(BaseModel):
-    email: str | None = None
-    password: str | None = None
 
 # Initialize the database
 async def init_db():
