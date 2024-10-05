@@ -41,3 +41,19 @@ class UserUpdate(models.BaseUserUpdate):
 
 class UserDB(User, models.BaseUserDB):
     pass
+
+# JWT Authentication setup
+auth_backends = [
+    JWTAuthentication(secret=SECRET, lifetime_seconds=3600),
+]
+
+# FastAPI Users setup
+user_db = MongoDBUserDatabase(UserDB, db["users"])
+fastapi_users = FastAPIUsers(
+    user_db,
+    auth_backends,
+    User,
+    UserCreate,
+    UserUpdate,
+    UserDB,
+)
