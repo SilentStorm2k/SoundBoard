@@ -2,14 +2,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel
-from fastapi_users import FastAPIUsers
-from fastapi_users.authentication import JWTStrategy
-from fastapi_users.db import BeanieUserDatabase
-from fastapi_users.db import BeanieBaseUser
-from beanie import Document, init_beanie
+from pydantic import BaseModel, EmailStr
+from fastapi_users import FastAPIUsers, BaseUserManager
+from fastapi_users.authentication import JWTStrategy, AuthenticationBackend, BearerTransport
+from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
+from beanie import Document, Indexed, init_beanie
 import boto3
 from bson import ObjectId
+from typing import Optional
 
 # Configuration
 DATABASE_URL = "mongodb://localhost:27017"
