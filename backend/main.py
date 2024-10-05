@@ -15,3 +15,16 @@ S3_BUCKET_NAME = "your-s3-bucket-name"  # Replace with your S3 bucket name
 
 # FastAPI app setup
 app = FastAPI()
+
+# CORS middleware setup
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Replace with your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# MongoDB setup
+client = AsyncIOMotorClient(DATABASE_URL)
+db = client["soundboard"]
