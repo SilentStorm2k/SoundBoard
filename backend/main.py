@@ -57,3 +57,15 @@ fastapi_users = FastAPIUsers(
     UserUpdate,
     UserDB,
 )
+
+# User router
+app.include_router(
+    fastapi_users.get_auth_router(auth_backends[0]),
+    prefix="/auth/jwt",
+    tags=["auth"]
+)
+app.include_router(
+    fastapi_users.get_register_router(),
+    prefix="/auth",
+    tags=["auth"]
+)
