@@ -28,3 +28,16 @@ app.add_middleware(
 # MongoDB setup
 client = AsyncIOMotorClient(DATABASE_URL)
 db = client["soundboard"]
+
+# User model
+class User(models.BaseUser):
+    pass
+
+class UserCreate(models.BaseUserCreate):
+    pass
+
+class UserUpdate(models.BaseUserUpdate):
+    pass
+
+class UserDB(User, models.BaseUserDB):
+    pass
