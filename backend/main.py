@@ -15,6 +15,7 @@ from typing import Optional
 DATABASE_URL = "mongodb://localhost:27017"
 SECRET = "YOUR_SECRET_KEY"  # Replace with a secure secret key
 S3_BUCKET_NAME = "your-s3-bucket-name"  # Replace with your S3 bucket name
+FRONTEND_URL = "http://localhost:3000"
 
 # MongoDB setup
 client = AsyncIOMotorClient(DATABASE_URL)
@@ -71,7 +72,7 @@ app = FastAPI(lifespan=lifespan)
 # CORS middleware setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Replace with your frontend URL
+    allow_origins=[FRONTEND_URL],  # Replace with your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
