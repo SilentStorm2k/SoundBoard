@@ -1,10 +1,12 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from fastapi_users import FastAPIUsers, models
-from fastapi_users.authentication import JWTAuthentication
-from fastapi_users.db import MongoDBUserDatabase
+from fastapi_users.authentication import JWTStrategy
+from fastapi_users.db import BeanieUserDatabase
+from beanie import Document, init_beanie
 import boto3
 from bson import ObjectId
 
@@ -13,8 +15,16 @@ DATABASE_URL = "mongodb://localhost:27017"
 SECRET = "YOUR_SECRET_KEY"  # Replace with a secure secret key
 S3_BUCKET_NAME = "your-s3-bucket-name"  # Replace with your S3 bucket name
 
+# FastAPI app setup with lifespan context
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize the database
+    await init_beanie(database=db, document_models=[User])
+    yield  # Hand control over to the application
+    # Optionally, add shutdown logic here if necessary
+
 # FastAPI app setup
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # CORS middleware setup
 app.add_middleware(
@@ -30,7 +40,7 @@ client = AsyncIOMotorClient(DATABASE_URL)
 db = client["soundboard"]
 
 # User model
-class User(models.BaseUser):
+class User(Document, models.BaseUser):
     pass
 
 class UserCreate(models.BaseUserCreate):
@@ -42,13 +52,17 @@ class UserUpdate(models.BaseUserUpdate):
 class UserDB(User, models.BaseUserDB):
     pass
 
+# Initialize the database
+async def init_db():
+    await init_beanie(database=db, document_models=[User])
+
 # JWT Authentication setup
 auth_backends = [
-    JWTAuthentication(secret=SECRET, lifetime_seconds=3600),
+    JWTStrategy(secret=SECRET, lifetime_seconds=3600),
 ]
 
 # FastAPI Users setup
-user_db = MongoDBUserDatabase(UserDB, db["users"])
+user_db = BeanieUserDatabase(UserDB)
 fastapi_users = FastAPIUsers(
     user_db,
     auth_backends,
