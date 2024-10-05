@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, EmailStr
@@ -40,13 +40,13 @@ class Sound(Document):
     class Settings:
         name = "sounds"
 
-class UserCreate(BaseModel):
-    email: str
-    password: str
+# User manager
+class UserManager(ObjectIDIDMixin, BaseUserManager[User, ObjectId]):
+    reset_password_token_secret = SECRET
+    verification_token_secret = SECRET
 
-class UserUpdate(BaseModel):
-    email: str | None = None
-    password: str | None = None
+    async def on_after_register(self, user: User, request: Optional[Request] = None):
+        print(f"User {user.id} has registered.")
 
 # FastAPI app setup with lifespan context
 @asynccontextmanager
