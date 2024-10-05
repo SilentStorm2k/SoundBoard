@@ -3,9 +3,10 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
-from fastapi_users import FastAPIUsers, models
+from fastapi_users import FastAPIUsers
 from fastapi_users.authentication import JWTStrategy
 from fastapi_users.db import BeanieUserDatabase
+from fastapi_users.db import BeanieBaseUser
 from beanie import Document, init_beanie
 import boto3
 from bson import ObjectId
@@ -40,17 +41,16 @@ client = AsyncIOMotorClient(DATABASE_URL)
 db = client["soundboard"]
 
 # User model
-class User(Document, models.BaseUser):
+class User(BeanieBaseUser, Document):
     pass
 
-class UserCreate(models.BaseUserCreate):
-    pass
+class UserCreate(BaseModel):
+    email: str
+    password: str
 
-class UserUpdate(models.BaseUserUpdate):
-    pass
-
-class UserDB(User, models.BaseUserDB):
-    pass
+class UserUpdate(BaseModel):
+    email: str | None = None
+    password: str | None = None
 
 # Initialize the database
 async def init_db():
@@ -61,15 +61,13 @@ auth_backends = [
     JWTStrategy(secret=SECRET, lifetime_seconds=3600),
 ]
 
+# Use the following link to fix this
+# https://fastapi-users.github.io/fastapi-users/10.1/configuration/full-example/
 # FastAPI Users setup
-user_db = BeanieUserDatabase(UserDB)
+user_db = BeanieUserDatabase(User)
 fastapi_users = FastAPIUsers(
     user_db,
     auth_backends,
-    User,
-    UserCreate,
-    UserUpdate,
-    UserDB,
 )
 
 # User router
