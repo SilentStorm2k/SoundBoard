@@ -1,3 +1,3 @@
 # SoundBoard
 
-Connect to jira 2
+Connect to jira 2*
