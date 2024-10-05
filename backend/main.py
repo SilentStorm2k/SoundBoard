@@ -96,3 +96,16 @@ async def upload_sound(
     result = await db["sounds"].insert_one(sound_data)
 
     return {"message": "File uploaded successfully", "sound_id": str(result.inserted_id)}
+
+# Get user's sounds endpoint
+@app.get("/sounds/")
+async def get_sounds(user: User = Depends(fastapi_users.current_user(active=True))):
+    sounds = await db["sounds"].find({"user_id": user.id}).to_list(None)
+    return [
+        {
+            "id": str(sound["_id"]),
+            "sound_name": sound["sound_name"],
+            "sound_url": sound["sound_url"]
+        }
+        for sound in sounds
+    ]
