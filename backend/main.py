@@ -69,3 +69,30 @@ app.include_router(
     prefix="/auth",
     tags=["auth"]
 )
+
+# S3 client setup
+s3_client = boto3.client("s3")
+
+# Sound upload endpoint
+@app.post("/upload-sound/")
+async def upload_sound(
+    file: UploadFile = File(...),
+    user: User = Depends(fastapi_users.current_user(active=True))
+):
+    # Check file size (1MB max)
+    if file.size > 1 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds 1MB")
+
+    # Upload file to S3
+    file_path = f"{user.id}/{file.filename}"
+    s3_client.upload_fileobj(file.file, S3_BUCKET_NAME, file_path)
+
+    # Save file metadata to MongoDB
+    sound_data = {
+        "user_id": user.id,
+        "sound_url": f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{file_path}",
+        "sound_name": file.filename
+    }
+    result = await db["sounds"].insert_one(sound_data)
+
+    return {"message": "File uploaded successfully", "sound_id": str(result.inserted_id)}
