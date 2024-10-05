@@ -3,10 +3,10 @@ from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, EmailStr
-from fastapi_users import FastAPIUsers, BaseUserManager
+from fastapi_users import FastAPIUsers, BaseUserManager, schemas
 from fastapi_users.authentication import JWTStrategy, AuthenticationBackend, BearerTransport
 from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
-from beanie import Document, Indexed, init_beanie
+from beanie import Document, Indexed, PydanticObjectId, init_beanie
 import boto3
 from bson import ObjectId
 from typing import Optional
@@ -21,7 +21,7 @@ client = AsyncIOMotorClient(DATABASE_URL)
 db = client["soundboard"]
 
 # User model
-class User(Document, BaseUserManager):
+class User(Document):
     email: Indexed(EmailStr, unique=True)
     hashed_password: str
     is_active: bool = True
@@ -30,10 +30,19 @@ class User(Document, BaseUserManager):
 
     class Settings:
         name = "users"
+        
+class UserRead(schemas.BaseUser[PydanticObjectId]):
+    pass
+
+class UserCreate(schemas.BaseUserCreate):
+    pass
+
+class UserUpdate(schemas.BaseUserUpdate):
+    pass
 
 # Sound model
 class Sound(Document):
-    user_id: ObjectId
+    user_id: PydanticObjectId
     sound_url: str
     sound_name: str
 
@@ -41,7 +50,7 @@ class Sound(Document):
         name = "sounds"
 
 # User manager
-class UserManager(ObjectIDIDMixin, BaseUserManager[User, ObjectId]):
+class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
 
@@ -87,7 +96,7 @@ async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)):
 # Use the following link to fix this
 # https://fastapi-users.github.io/fastapi-users/10.1/configuration/full-example/
 # FastAPI Users setup
-fastapi_users = FastAPIUsers[User, ObjectId](get_user_manager, [auth_backend])
+fastapi_users = FastAPIUsers[User, PydanticObjectId](get_user_manager, [auth_backend])
 
 # User router
 app.include_router(
@@ -96,7 +105,7 @@ app.include_router(
     tags=["auth"]
 )
 app.include_router(
-    fastapi_users.get_register_router(),
+    fastapi_users.get_register_router(UserRead, UserCreate),
     prefix="/auth",
     tags=["auth"]
 )
