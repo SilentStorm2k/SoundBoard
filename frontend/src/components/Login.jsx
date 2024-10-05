@@ -52,3 +52,5 @@ function Login({ setIsAuthenticated }) {
     </div>
   );
 }
+
+export default Login;
