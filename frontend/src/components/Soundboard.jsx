@@ -17,7 +17,7 @@ function Soundboard({ setIsAuthenticated }) {
 
   const fetchSounds = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/sounds/`, {
+      const response = await fetch(`${process.env.BACKEND_URL}/sounds/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -44,7 +44,7 @@ function Soundboard({ setIsAuthenticated }) {
     if (!soundUrl || !soundName) return;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/upload-sound/`, {
+      const response = await fetch(`${process.env.BACKEND_URL}/upload-sound/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
