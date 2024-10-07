@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, EmailStr, HttpUrl
@@ -7,14 +7,13 @@ from fastapi_users import FastAPIUsers, BaseUserManager, schemas
 from fastapi_users.authentication import JWTStrategy, AuthenticationBackend, BearerTransport
 from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 from beanie import Document, Indexed, PydanticObjectId, init_beanie
-from bson import ObjectId
 from typing import Optional
+import os
 
 # Configuration
-# DATABASE_URL = "mongodb://localhost:27017"
-DATABASE_URL = "mongodb+srv://shivvanandh:Sez4QBx2DWkRpmbM@cluster0.pym4o.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-SECRET = "YOUR_SECRET_KEY"  # Replace with a secure secret key
-FRONTEND_URL = "http://localhost:3000"
+DATABASE_URL = os.environ.get("DB_URL")
+SECRET = os.environ.get("SECRET")  # Replace with a secure secret key
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
 
 # MongoDB setup
 client = AsyncIOMotorClient(DATABASE_URL)
