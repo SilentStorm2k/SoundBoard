@@ -1,11 +1,11 @@
 // components/Soundboard.js
 import React, { useState, useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function Soundboard({ setIsAuthenticated }) {
   const [sounds, setSounds] = useState([]);
   const [file, setFile] = useState(null);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchSounds();
@@ -58,7 +58,7 @@ function Soundboard({ setIsAuthenticated }) {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
-    history.push('/login');
+    navigate('/login');
   };
 
   const playSound = (url) => {
