@@ -2,19 +2,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, HttpUrl
 from fastapi_users import FastAPIUsers, BaseUserManager, schemas
 from fastapi_users.authentication import JWTStrategy, AuthenticationBackend, BearerTransport
 from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 from beanie import Document, Indexed, PydanticObjectId, init_beanie
-import boto3
 from bson import ObjectId
 from typing import Optional
 
 # Configuration
-DATABASE_URL = "mongodb://localhost:27017"
+# DATABASE_URL = "mongodb://localhost:27017"
+DATABASE_URL = "mongodb+srv://shivvanandh:Sez4QBx2DWkRpmbM@cluster0.pym4o.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 SECRET = "YOUR_SECRET_KEY"  # Replace with a secure secret key
-S3_BUCKET_NAME = "your-s3-bucket-name"  # Replace with your S3 bucket name
 FRONTEND_URL = "http://localhost:3000"
 
 # MongoDB setup
@@ -23,7 +22,7 @@ db = client["soundboard"]
 
 # User model
 class User(Document):
-    email: Indexed(EmailStr, unique=True)
+    email: Indexed(EmailStr, unique=True) # type: ignore
     hashed_password: str
     is_active: bool = True
     is_superuser: bool = False
@@ -31,6 +30,7 @@ class User(Document):
 
     class Settings:
         name = "users"
+        email_collation = None  # Add this line
         
 class UserRead(schemas.BaseUser[PydanticObjectId]):
     pass
@@ -44,11 +44,15 @@ class UserUpdate(schemas.BaseUserUpdate):
 # Sound model
 class Sound(Document):
     user_id: PydanticObjectId
-    sound_url: str
+    sound_url: HttpUrl
     sound_name: str
 
     class Settings:
         name = "sounds"
+
+class SoundCreate(BaseModel):
+    sound_url: HttpUrl
+    sound_name: str
 
 # User manager
 class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
@@ -94,8 +98,6 @@ async def get_user_db():
 async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)):
     yield UserManager(user_db)
 
-# Use the following link to fix this
-# https://fastapi-users.github.io/fastapi-users/10.1/configuration/full-example/
 # FastAPI Users setup
 fastapi_users = FastAPIUsers[User, PydanticObjectId](get_user_manager, [auth_backend])
 
@@ -111,32 +113,21 @@ app.include_router(
     tags=["auth"]
 )
 
-# S3 client setup
-s3_client = boto3.client("s3")
 
 # Sound upload endpoint
 @app.post("/upload-sound/")
 async def upload_sound(
-    file: UploadFile = File(...),
+    sound: SoundCreate,
     user: User = Depends(fastapi_users.current_user(active=True))
 ):
-    # Check file size (1MB max)
-    if file.size > 1 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File size exceeds 1MB")
-
-    # Upload file to S3
-    file_path = f"{user.id}/{file.filename}"
-    s3_client.upload_fileobj(file.file, S3_BUCKET_NAME, file_path)
-
-    # Save file metadata to MongoDB
-    sound= Sound(
+    sound = Sound (
         user_id     = user.id,
-        sound_url   = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/{file_path}",
-        sound_name  = file.filename
+        sound_url   = sound.sound_url,
+        sound_name  = sound.sound_name
     )
     await sound.insert()
 
-    return {"message": "File uploaded successfully", "sound_id": str(sound.id)}
+    return {"message": "Sound uploaded successfully", "sound_id": str(sound.id)}
 
 # Get user's sounds endpoint
 @app.get("/sounds/")
@@ -146,7 +137,7 @@ async def get_sounds(user: User = Depends(fastapi_users.current_user(active=True
         {
             "id": str(sound.id),
             "sound_name": sound.sound_name,
-            "sound_url": sound.sound_url
+            "sound_url": str(sound.sound_url)
         }
         for sound in sounds
     ]
