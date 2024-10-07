@@ -1,11 +1,11 @@
 // components/Login.js
 import React, { useState } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Login({ setIsAuthenticated }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +19,7 @@ function Login({ setIsAuthenticated }) {
         const data = await response.json();
         localStorage.setItem('token', data.access_token);
         setIsAuthenticated(true);
-        history.push('/soundboard');
+        navigate('/soundboard');
       } else {
         alert('Login failed');
       }
