@@ -17,7 +17,7 @@ function Soundboard({ setIsAuthenticated }) {
 
   const fetchSounds = async () => {
     try {
-      const response = await fetch('http://localhost:8000/sounds/', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/sounds/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
