@@ -1,10 +1,14 @@
 // components/Soundboard.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import YouTube from 'react-youtube';
 
 function Soundboard({ setIsAuthenticated }) {
   const [sounds, setSounds] = useState([]);
-  const [file, setFile] = useState(null);
+  // const [file, setFile] = useState(null);
+  const [soundUrl, setSoundUrl] = useState('');
+  const [soundName, setSoundName] = useState('');
+  const [player, setPlayer] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,26 +31,35 @@ function Soundboard({ setIsAuthenticated }) {
     }
   };
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+  const handleSoundUrlChange = (e) => {
+    setSoundUrl(e.target.value);
+  };
+
+  const handleSoundNameChange = (e) => {
+    setSoundName(e.target.value);
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
+    if (!soundUrl || !soundName) return;
 
     try {
       const response = await fetch('http://localhost:8000/upload-sound/', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: formData,
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}` 
+        },
+        body: JSON.stringify({
+          sound_url: soundUrl,
+          sound_name: soundName
+        })
       });
       if (response.ok) {
         alert('Sound uploaded successfully');
         fetchSounds();
+        setSoundUrl('');
+        setSoundName('');
       } else {
         throw new Error('Failed to upload sound');
       }
@@ -62,8 +75,14 @@ function Soundboard({ setIsAuthenticated }) {
   };
 
   const playSound = (url) => {
-    const audio = new Audio(url);
-    audio.play();
+    if (player) {
+      player.loadVideoById(url);
+      player.playVideo();
+    }
+  };
+
+  const onReady = (event) => {
+    setPlayer(event.target);
   };
 
   return (
@@ -73,20 +92,43 @@ function Soundboard({ setIsAuthenticated }) {
       <div>
         <h3>Upload Sound</h3>
         <form onSubmit={handleUpload}>
-          <input type="file" accept="audio/*" onChange={handleFileChange} />
+          <input 
+            type="text"
+            placeholder="YouTube URL"
+            value={soundUrl}
+            onChange={handleSoundUrlChange}
+          />
+          <input
+            type="text"
+            placeholder="Sound Name"
+            value={soundName}
+            onChange={handleSoundNameChange}
+          />
           <button type="submit">Upload</button>
         </form>
       </div>
       <div>
         <h3>Your Sounds</h3>
         {sounds.map((sound) => (
-          <button key={sound.id} onClick={() => playSound(sound.sound_url)}>
+          <button key={sound.id} onClick={() => playSound(getSoundId(sound.sound_url))}>
             {sound.sound_name}
           </button>
         ))}
       </div>
+      {/* Hiding youtube video playback */}
+      <YouTube
+        videoId=""
+        opts={{ height: '0', width: '0', playerVars: { autoplay: 1 } }}
+        onReady={onReady}
+      />
     </div>
   );
+}
+
+function getSoundId(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
 }
 
 export default Soundboard;
