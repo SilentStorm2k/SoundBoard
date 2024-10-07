@@ -44,7 +44,7 @@ function Soundboard({ setIsAuthenticated }) {
     if (!soundUrl || !soundName) return;
 
     try {
-      const response = await fetch('http://localhost:8000/upload-sound/', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/upload-sound/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
