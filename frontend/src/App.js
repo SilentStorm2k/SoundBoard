@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import Soundboard from './components/Soundboard';
@@ -17,21 +17,26 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <Switch>
-          <Route path="/login" render={(props) => <Login {...props} setIsAuthenticated={setIsAuthenticated} />} />
-          <Route path="/register" component={Register} />
-          <Route
-            path="/soundboard"
-            render={(props) =>
+        <h1>Welcome to the Soundboard App!</h1>
+        <Routes>
+          {/* login route */}
+          <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+          {/* Register Route */}
+          <Route path="/register" element={<Register />} />
+          {/* Protected Soundboard Route */}
+          <Route 
+            path="/soundboard" 
+            element={
               isAuthenticated ? (
-                <Soundboard {...props} setIsAuthenticated={setIsAuthenticated} />
+                <Soundboard setIsAuthenticated={setIsAuthenticated} />
               ) : (
-                <Redirect to="/login" />
+                <Navigate to="/login" />
               )
-            }
+            } 
           />
-          <Redirect from="/" to="/login" />
-        </Switch>
+          {/* Redirect from root ("/") to login */}
+          <Route path="*" element={<Navigate to="/login" />} />
+        </Routes>
       </div>
     </Router>
   );
