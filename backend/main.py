@@ -9,10 +9,12 @@ from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 from beanie import Document, Indexed, PydanticObjectId, init_beanie
 from typing import Optional
 import os
+from dotenv import load_dotenv
 
 # Configuration
+load_dotenv()
 DATABASE_URL = os.environ.get("DB_URL")
-SECRET = os.environ.get("SECRET")  # Replace with a secure secret key
+SECRET = os.environ.get("SECRET")  
 FRONTEND_URL = os.environ.get("FRONTEND_URL")
 
 # MongoDB setup
