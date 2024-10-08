@@ -5,7 +5,6 @@ import YouTube from 'react-youtube';
 
 function Soundboard({ setIsAuthenticated }) {
   const [sounds, setSounds] = useState([]);
-  // const [file, setFile] = useState(null);
   const [soundUrl, setSoundUrl] = useState('');
   const [soundName, setSoundName] = useState('');
   const [player, setPlayer] = useState(null);
@@ -17,7 +16,7 @@ function Soundboard({ setIsAuthenticated }) {
 
   const fetchSounds = async () => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/sounds/`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/sounds/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.ok) {
@@ -44,7 +43,7 @@ function Soundboard({ setIsAuthenticated }) {
     if (!soundUrl || !soundName) return;
 
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/upload-sound/`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/upload-sound/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -126,7 +125,7 @@ function Soundboard({ setIsAuthenticated }) {
 }
 
 function getSoundId(url) {
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*)/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 }
